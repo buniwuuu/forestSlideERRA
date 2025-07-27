@@ -1,2 +1,4 @@
 # Ignore system files
 .DS_Store
+.mapping
+.Rhistory
