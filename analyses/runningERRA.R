@@ -50,3 +50,4 @@ rrd.plot.test <- ggplot(data = rrd.test, aes(x= lagtime, y = RRD_p.all)) +
                     + se_p.all), width = 0.2) +
   theme_minimal()
 rrd.plot.test
+ggsave("analyses/output/RRD.png", plot = rrd.plot.test, bg  = "white")
