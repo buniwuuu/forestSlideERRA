@@ -11,3 +11,6 @@ Freshwater Atlas Named Watersheds. BC Data Catalogue. Retrieved July 24th, 2025.
 
 Hydrometric stations
 Hydrometric Stations - Active and Discontinued. BC Data Catalogue. Retrieved July 24th, 2025. https://catalogue.data.gov.bc.ca/dataset/hydrometric-stations-active-and-discontinued
+National Hydrometric Network Basin Polygons. Government of Canada. Retrieved July 30th, 2025. https://collaboration.cmc.ec.gc.ca/cmc/hydrometrics/www/HydrometricNetworkBasinPolygons/
+
+Brideau et al., Preliminary Canadian Landslide Database. https://data.niaid.nih.gov/resources?id=zenodo_7089351 
