@@ -17,37 +17,58 @@ library(caTools)
 library(ggplot2)
 
 # load erra script
-source("erra/erra_scripts_v1.06/ERRA_v1.06.R")
+source("/analyses/erra/erra_scripts_v1.06/ERRA_v1.06.R")
 
 # load datasets
-dat <- read.csv("analyses/output/cleanedData/datQuesnel.csv")
-snowfree <- ifelse((dat$Month>6)&(dat$Month<11), 1, 0)
+dat <- read.csv("output/cleanedData/datQuesnel.csv", 
+                na.strings=c("NA",".","","#N/A"))
 p <- dat$Total.Precip..mm.
 q <- dat$q
 q <- q/15672900*1000 #normalize discharge (m3/s) by catchment area (m2) then times 100 to get mm/day
 temp <- dat$Mean.Temp...C.
 
-# Run ERRA
-## whole time period
-zz <- ERRA(p=ifelse((temp>4), p, 0), q=q,agg = 1, xknots=NULL, dt=1, 
+
+# 1. Run ERRA with whole time period----
+zz <- ERRA(p=ifelse((temp>4), p, 0), q=q,agg = 1, xknots=NULL, dt=1,
            m = 120, robust = FALSE) #only analyze situations where it's raining
-fileID <- "analyses/output/test"
+
+
+fileID <- "output/RRD/"
+
 with(zz, {
   fwrite(RRD, paste0(fileID, "RRD.txt"), sep="\t")
   fwrite(peakstats, paste0(fileID, "peakstats.txt"), sep="\t")
   fwrite(Qcomp, paste0(fileID, "Qcomp.txt"), sep="\t")
 })
-## separating timeline using groundwater
 
-# plot RRD 
-rrd.test <- read.table("analyses/output/testRRD.txt", header = TRUE)
-rrd.plot.test <- ggplot(data = rrd.test, aes(x= lagtime, y = RRD_p.all)) +
-  geom_point() +
-  labs(title = "Runoff Response Analyses Plot of Baker Creek Outlet",
-       x = "Days",
-       y = "RRD (1/day)") +
-  geom_errorbar(aes(ymin = RRD_p.all - se_p.all, ymax = RRD_p.all 
-                    + se_p.all), width = 0.2) +
-  theme_minimal()
-rrd.plot.test
-ggsave("analyses/output/RRD.png", plot = rrd.plot.test, bg  = "white")
+
+# 2. Run ERRA with p and q split into bins using groundwater quantile ----
+gw <- dat$level
+gwParams <- list(
+  crit = list(gw) ,
+  crit_label = c("gw") ,
+  crit_lag = 1 ,
+  breakpts = list(c(25,50,75)) ,
+  pct_breakpts = TRUE ,
+  thresh = 0 ,
+  by_bin = FALSE
+)
+
+zz2 <- ERRA(p=ifelse((temp>4), p, 0), q=q, m = 60, 
+                    split_params = gwParams) #m can' be too big
+# Save result
+with(zz2, {
+  fwrite(RRD, paste0(fileID, "RRD2.txt"), sep="\t")
+  fwrite(peakstats, paste0(fileID, "peakstats2.txt"), sep="\t")
+  fwrite(Qcomp, paste0(fileID, "Qcomp2.txt"), sep="\t")
+})
+
+# 3. Run ERRA with q substituted by groundwater level
+zz3 <- ERRA(p = ifelse(temp > 4, p, 0), q=gw, agg = 1, xknots = NULL, dt = 1, 
+            m = 120, robust = FALSE)
+
+with(zz3, {
+  fwrite(RRD, paste0(fileID, "RRD3.txt"), sep="\t")
+  fwrite(peakstats, paste0(fileID, "peakstats3.txt"), sep="\t")
+  fwrite(Qcomp, paste0(fileID, "Qcomp3.txt"), sep="\t")
+})
