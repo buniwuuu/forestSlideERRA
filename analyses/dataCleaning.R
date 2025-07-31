@@ -16,33 +16,46 @@ library(caTools)
 
 # load hydrometric data
 hydro.df <- read.csv("data/hydrometric/quesnel/hydrometric08KE016.csv", header = FALSE)
+hydrofiles <- list.files("data/hydrometric/quesnel/", 
+                         pattern = "^Cpm.*\\.txt$", 
+                         full.names = TRUE)
+hydro.list <- lapply(hydrofiles, read.fwf, skip = 38,  # Skip header separator line
+                     widths = c(20, 14, 12, 12, 20),
+                     col.names = c("datetime", "water_level", "wl_comment", "discharge", "discharge_comment"),
+                     strip.white = TRUE,
+                  )
+hydro.list <- lapply(hydro.list,function(df) {
+  df$water_level[df$water_level == -999.999] <- NA
+  return(df)
+})
+hydro.cb <- do.call(rbind, hydro.list)
 
 # clean hydrometric data, split level and flow data
-colnames(hydro.df) <- as.character(unlist(hydro.df[2, ])) #make second row header
-hydro.df <- hydro.df[-c(1,2), ] #remove first two rows
-hydro.df.long <- hydro.df %>%
-  pivot_longer(
-    cols = Jan:Dec,
-    names_to = "month",
-    values_to = "value"
-  ) %>%
-  mutate(
-    YEAR = as.numeric(YEAR),
-    DD = as.numeric(DD),
-    month_num = match(tolower(month), tolower(month.abb)),
-    date = as.Date(sprintf("%04d-%02d-%02d", YEAR, month_num, DD))
-  ) %>%
-  filter(!is.na(value)) %>% 
-  filter(value != "") %>%
-  filter(!is.numeric(value)) %>%
-  arrange(date) %>%              
-  select(date, value, PARAM)
-
-flow.df <- hydro.df.long[which(hydro.df.long$PARAM == "1"),] %>%
-  select(date, value) #group flow and level data into 2 df, removing param column
-level.df <- hydro.df.long[which(hydro.df.long$PARAM == "2"),] %>%
-  filter(!is.na(date)) %>%
-  select(date, value)
+# colnames(hydro.df) <- as.character(unlist(hydro.df[2, ])) #make second row header
+# hydro.df <- hydro.df[-c(1,2), ] #remove first two rows
+# hydro.df.long <- hydro.df %>%
+#   pivot_longer(
+#     cols = Jan:Dec,
+#     names_to = "month",
+#     values_to = "value"
+#   ) %>%
+#   mutate(
+#     YEAR = as.numeric(YEAR),
+#     DD = as.numeric(DD),
+#     month_num = match(tolower(month), tolower(month.abb)),
+#     date = as.Date(sprintf("%04d-%02d-%02d", YEAR, month_num, DD))
+#   ) %>%
+#   filter(!is.na(value)) %>% 
+#   filter(value != "") %>%
+#   filter(!is.numeric(value)) %>%
+#   arrange(date) %>%              
+#   select(date, value, PARAM)
+# 
+# flow.df <- hydro.df.long[which(hydro.df.long$PARAM == "1"),] %>%
+#   select(date, value) #group flow and level data into 2 df, removing param column
+# level.df <- hydro.df.long[which(hydro.df.long$PARAM == "2"),] %>%
+#   filter(!is.na(date)) %>%
+#   select(date, value)
 
 # load precip data
 w.2011 <- read.csv("~/Documents/M.Sc/forestSlideERRA/data/climate/quesnel/en_climate_daily_BC_1096629_2011_P1D.csv", header = TRUE)
@@ -95,4 +108,5 @@ dat <- dat %>%
 # write.csv(flow.df, "analyses/output/cleanedData/flow08KE016.csv") not sure if i need these data separately
 # write.csv(level.df, "analyses/output/cleanedData/level08KE016.csv")
 # write.csv(w.all, "analyses/output/cleanedData/weather1096629.csv")
-write.csv(dat, "analyses/output/cleanedData/datQuesnel.csv")
+write.csv(w.all, "output/cleanedData/weather1096629.csv")
+write.csv(hydro.cb, "output/cleanedData/hydro08KE016.csv")
