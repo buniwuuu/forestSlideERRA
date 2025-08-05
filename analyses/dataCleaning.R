@@ -14,7 +14,7 @@ library(matrixStats)
 library(Rcpp)
 library(caTools)
 
-# load hydrometric data
+# load pre 2011 hydrometric data
 hydro.df <- read.csv("data/hydrometric/quesnel/hydrometric08KE016.csv", header = FALSE)
 hydrofiles <- list.files("data/hydrometric/quesnel/", 
                          pattern = "^Cpm.*\\.txt$", 
@@ -29,6 +29,20 @@ hydro.list <- lapply(hydro.list,function(df) {
   return(df)
 })
 hydro.cb <- do.call(rbind, hydro.list)
+hydro.cb$date <- as.POSIXct(hydro.cb$datetime)
+hydro.cb <- hydro.cb[format(hydro.cb$date, "%Y") != "2011", ]
+
+# load post 2011 data
+q.post <- read.csv("data/hydrometric/quesnel/Discharge.Working@08KE016.20110101_corrected.csv", skip = 14)
+q.post <- q.post[, c("Timestamp..UTC.08.00.", "Value")]
+colnames(q.post) <- c("datetime", "discharge")
+q.post$date <- as.POSIXct(q.post$datetime)
+
+lvl.post <- read.csv("data/hydrometric/quesnel/Stage.Working@08KE016.20110101_corrected.csv", skip = 14)
+lvl.post <- lvl.post[, c("Timestamp..UTC.08.00.", "Value")]
+colnames(lvl.post) <- c("datetime", "level")
+lvl.post$date <-as.POSIXct(lvl.post$datetime)
+lvl.post <- lvl.post[-(1:96),]
 
 # clean hydrometric data, split level and flow data
 # colnames(hydro.df) <- as.character(unlist(hydro.df[2, ])) #make second row header
@@ -95,7 +109,6 @@ precip <- bind_rows(
 )
 
 # bind precip and hydrometric data
-
 dat <- full_join(w.all, flow.df, by = c("Date.Time" = "date"))
 colnames(dat)[colnames(dat) == "value"] <- "q"
 dat <- full_join(dat, level.df, by = c("Date.Time" = "date"))
@@ -103,6 +116,7 @@ colnames(dat)[colnames(dat) == "value"] <- "level"
 dat <- dat %>%
   filter(!is.na(Station.Name)) %>%
   filter(!is.na(Date.Time))
+
 
 # write csv
 # write.csv(flow.df, "analyses/output/cleanedData/flow08KE016.csv") not sure if i need these data separately

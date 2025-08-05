@@ -17,7 +17,7 @@ library(caTools)
 library(ggplot2)
 
 # load erra script
-source("/analyses/erra/erra_scripts_v1.06/ERRA_v1.06.R")
+source("analyses/erra/erra_scripts_v1.06/ERRA_v1.06.R")
 
 # load datasets
 dat <- read.csv("output/cleanedData/datQuesnel.csv", 

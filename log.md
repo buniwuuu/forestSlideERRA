@@ -25,5 +25,12 @@ Questions
 - can I make this method stochastic? Instead of having one averaged ensemble runoff response distribution curve, can I make a distribution of the probability that the runoff will reach to the stream in a certain time? 
 - how does this help answer my research question? 
 
+July 31st
+
+Got historical hydrometric data from 1996 in 15 min interval. Data before 2011 and after 2011 are two datasets because of upgrades in measuring system in 2011. 
+
+August 5th 
+Cleaning data - level data looking fine, starts in 2011-01-01 in 15-min interval. Discharge data is only in daily format until April 2011 for the new dataset. However, the pre-2011 data contain data until September data. So I might fill the gap with the old data, until April 23rd, 2011. 
+Do the timestamps need to align for ERRA?
 
 
